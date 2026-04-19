@@ -5,6 +5,7 @@
 #include "json.hpp"
 #include <vector>
 #include <sstream>
+#include <filesystem>
 
 
 using json = nlohmann::json;
@@ -19,9 +20,12 @@ std::vector<std::string> options={
 	"'exit' for exit" 
 };
 
+std::string home=std::getenv("HOME");
+std::string PATH=home+"/.presets.json";
+
 
 void saving(json& presets){
-	std::ofstream file("presets.json");
+	std::ofstream file(PATH);
 	file<<presets.dump(4);
 }
 
@@ -175,7 +179,7 @@ void Delete(std::string preset, json& presets){
 
 
 int main(){
-	std::ifstream file("presets.json");
+	std::ifstream file(PATH);
 	json presets;
 	if(file.is_open()){
 		file>>presets;
