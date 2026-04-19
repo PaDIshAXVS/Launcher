@@ -13,6 +13,8 @@ using json = nlohmann::json;
 std::vector<std::string> options={
 	"'list' for all presets",
 	"'start' for launching presets",
+	"'add' for adding presets",
+	"'edit' for editing presets",
 	"'delete' for deleting presets",
 	"'exit' for exit" 
 };
@@ -26,11 +28,11 @@ void saving(json& presets){
 
 void list_presets(const json& presets){
 	std::cout<<"All presets:\n";
+
+	int i=1;
 	for(const auto& [name,command]:presets.items()){
-		std::cout<<"Preset ["<<name<<"] contains "<<command.size()<<" commands:\n";
-		for(const auto& cmd:command){
-			std::cout<<"	- "<<cmd<<'\n';
-		}
+		std::cout<<i<<"'"<<name<<"'\n";
+		i++;
 	}
 }
 
@@ -51,9 +53,10 @@ void start(std::string preset, const json& presets){
 				return;
 			}
 
-			if(!presets.contains(preset)){
+			else if(!presets.contains(preset)){
 				std::cerr<<"Error: preset is not found! Use 'list' for all presets or 'exit' for exit\n";
 			}
+
 			else break;
 		}
 		std::cin.ignore(10000,'\n');
@@ -75,6 +78,73 @@ void start(std::string preset, const json& presets){
 }
 
 
+void add(std::string preset, json& presets){
+	if(preset == "@#" || presets.contains(preset)){
+		while(true){
+			std::cout<<"Please, enter unique preset name: ";
+			std::cin>>preset;
+
+			if(preset == "list"){
+				list_presets(presets);
+				continue;
+			}
+
+			else if(preset == "exit"){
+				std::cin.ignore(10000,'\n');
+				return;
+			}
+
+			else if(presets.contains(preset)){
+				std::cerr<<"Error: preset ["<<preset<<"] already exist! Use 'list' to see all or 'exit' for exit\n";
+			}
+
+			else break;
+		}
+		std::cin.ignore(10000,'\n');
+	}
+
+	std::vector<std::string> new_preset;
+
+	while(true){
+		std::cout<<"Enter command, for exit type 'exit': ";
+		std::string command;
+		std::getline(std::cin, command);
+
+		if(command == "exit")
+			break;
+
+		else if(command.empty())
+			continue;
+
+		else 
+			new_preset.push_back(command);
+	}
+
+	std::cout<<"Do you want to save preset?(y/n): ";
+	char ans;
+	std::cin>>ans;
+
+	if(ans == 'y'){
+		for(const auto& cmd:new_preset){
+			presets[preset].push_back(cmd);
+		}
+
+		std::cin.ignore(10000,'\n');
+		saving(presets);
+	}
+
+	else{
+		std::cin.ignore(10000,'\n');
+		return;
+	}
+}
+
+
+void edit(std::string preset, json& presets){
+
+}
+
+
 void Delete(std::string preset, json& presets){
 	if(preset == "@#" || !presets.contains(preset)){
 		while(true){
@@ -91,9 +161,10 @@ void Delete(std::string preset, json& presets){
 				return;
 			}
 
-			if(!presets.contains(preset)){
+			else if(!presets.contains(preset)){
 				std::cerr<<"Error: preset is not found! Use 'list' for all presets or 'exit' for exit\n";
 			}
+
 			else break;
 		}
 		std::cin.ignore(10000,'\n');
@@ -135,7 +206,9 @@ int main(){
 			}
 		}
 
-		else if(option == "list") list_presets(presets);
+		else if(option == "list") 
+			list_presets(presets);
+
 		else if(option == "start"){
 			std::string parametr;
 			if(argc.size() > 1) parametr=argc[1];
@@ -143,6 +216,7 @@ int main(){
 
 			start(parametr, presets);
 		}
+
 		else if(option == "delete"){
 			std::string parametr;
 			if(argc.size() > 1) parametr=argc[1];
@@ -150,6 +224,23 @@ int main(){
 
 			Delete(parametr, presets);
 		}
+
+		else if(option == "add"){
+			std::string parametr;
+			if(argc.size() > 1) parametr=argc[1];
+			else parametr="@#";
+
+			add(parametr,presets);
+		}
+
+		else if(option == "edit"){
+			std::string parametr;
+			if(argc.size() > 1) parametr=argc[1];
+			else parametr="@#";
+
+			edit(parametr,presets);
+		}
+
 		else{
 			std::cout<<"Error: option is not correct!\n";
 		}
