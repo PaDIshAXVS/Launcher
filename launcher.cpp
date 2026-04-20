@@ -144,8 +144,100 @@ void add(std::string preset, json& presets){
 }
 
 
-void edit(std::string preset, json& presets){
+void show_commands(std::string preset, json& presets){
+	int i=1;
+	for(const auto& com:presets[preset]){
+		std::cout<<i<<". "<<com<<'\n';
+		i++;
+	}
+}
 
+
+void edit(json& presets){
+	std::cout<<"How do you want to edit presets? VS Code/launcher/exit(1/2/'exit')\n";
+	
+	std::string answer;
+	std::cin>>answer;
+
+	if(answer == "1"){
+		std::string command="code --wait ";
+		command+=PATH;
+
+		int status=std::system(command.c_str());
+		if(status != 0){
+			std::cerr<<"Process returned with status "<<status<<'\n';
+		}
+
+		std::ifstream reload_file(PATH);
+		if(reload_file.is_open()){
+			presets.clear();
+			reload_file>>presets;
+			reload_file.close();
+		}
+	}
+
+	else if(answer == "2"){
+		std::cout<<"Enter preset name\n";
+		
+		std::string preset;
+		std::cin>>preset;
+
+		while(!presets.contains(preset)){
+			std::cout<<"Enter preset. Use 'list' or 'exit'\n";
+			std::cin>>preset;
+			std::cin.ignore(10000,'\n');
+
+			if(preset == "list") 
+				list_presets(presets);
+			
+			else if(preset == "exit"){
+				std::cin.ignore(10000,'\n');
+				return;
+			}
+		}
+
+		std::cout<<"Changing preset ["<<preset<<"]\n";
+
+		std::string answer;
+		std::string command;
+		int preset_number;
+
+		while(true){
+			show_commands(preset,presets);
+			std::cout<<"What to do? (add <cmd> / del <number> / 'exit'): ";
+			std::cin>>answer;
+			std::cin.ignore(10000,'\n');
+
+			if(answer == "exit")
+				return;
+
+			else if(answer == "add"){
+				std::getline(std::cin>>std::ws, command);
+				presets[preset].push_back(command);
+				
+				saving(presets);
+			}
+
+			else if(answer == "del"){
+				std::cin>>preset_number;
+				
+				if(preset_number > 0 && preset_number <= presets[preset].size()){
+					presets[preset].erase(preset_number-1);
+				}
+
+				else 
+					std::cerr<<"Error: invalid preset index\n";
+
+				saving(presets);
+			}
+
+			else	
+				std::cerr<<"Error: unknown command\n";
+		}
+	}
+
+	else 
+		return;
 }
 
 
@@ -238,11 +330,7 @@ int main(){
 		}
 
 		else if(option == "edit"){
-			std::string parametr;
-			if(argc.size() > 1) parametr=argc[1];
-			else parametr="@#";
-
-			edit(parametr,presets);
+			edit(presets);
 		}
 
 		else{
